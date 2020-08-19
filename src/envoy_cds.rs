@@ -1,0 +1,88 @@
+use async_stream::try_stream;
+use futures::Stream;
+use prost_types::Duration;
+use std::pin::Pin;
+use tonic::{Request, Response, Status, Streaming};
+
+use crate::envoy::envoy::config::cluster::v3::Cluster;
+use crate::envoy::envoy::service::cluster::v3::cluster_discovery_service_server::ClusterDiscoveryService;
+use crate::envoy::envoy::service::discovery::v3::{
+    DeltaDiscoveryRequest, DeltaDiscoveryResponse, DiscoveryRequest, DiscoveryResponse,
+};
+
+// @TODO add a cache element here?
+#[derive(Debug, Default)]
+pub struct CDS {}
+
+#[tonic::async_trait]
+impl ClusterDiscoveryService for CDS {
+    type StreamClustersStream = Pin<
+        Box<dyn Stream<Item = Result<DiscoveryResponse, tonic::Status>> + Send + Sync + 'static>,
+    >;
+
+    type DeltaClustersStream = Pin<
+        Box<
+            dyn Stream<Item = Result<DeltaDiscoveryResponse, tonic::Status>>
+                + Send
+                + Sync
+                + 'static,
+        >,
+    >;
+
+    async fn stream_clusters(
+        &self,
+        _request: Request<tonic::Streaming<DiscoveryRequest>>,
+    ) -> Result<Response<Self::StreamClustersStream>, Status> {
+        let mut clusters: Vec<prost_types::Any> = Vec::new();
+
+        // @TODO change here how the info is retrieved using some kind of cache.
+        // implement a method for encode that?
+        let cluster = Cluster {
+            name: "google.com".to_string(),
+            connect_timeout: Some(Duration {
+                seconds: 1,
+                nanos: 0,
+            }),
+            ..Default::default()
+        };
+
+        let mut buf = Vec::new();
+        prost::Message::encode(&cluster, &mut buf).unwrap();
+
+        clusters.push(prost_types::Any {
+            type_url: "type.googleapis.com/envoy.config.cluster.v3.Cluster".to_string(),
+            // value: "foo".to_string().into_bytes(),
+            value: buf,
+        });
+
+        let discovery = DiscoveryResponse {
+            version_info: "1".to_string(),
+            type_url: "type.googleapis.com/envoy.config.cluster.v3.Cluster".to_string(),
+            resources: clusters,
+            nonce: "nonce".to_string(),
+            ..Default::default()
+        };
+
+        let output = try_stream! {
+           yield discovery.clone();
+        };
+
+        return Ok(Response::new(Box::pin(output) as Self::StreamClustersStream));
+    }
+
+    async fn delta_clusters(
+        &self,
+        _request: Request<Streaming<DeltaDiscoveryRequest>>,
+    ) -> Result<Response<Self::DeltaClustersStream>, Status> {
+        println!("Delta cluster");
+        return Err(Status::unimplemented("not implemented"));
+    }
+
+    async fn fetch_clusters(
+        &self,
+        _request: Request<DiscoveryRequest>,
+    ) -> Result<Response<DiscoveryResponse>, Status> {
+        println!("Fetch_cluster");
+        return Err(Status::unimplemented("not implemented"));
+    }
+}

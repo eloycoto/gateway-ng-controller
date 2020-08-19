@@ -1,0 +1,12 @@
+[submodule "protos/envoyproxy/data-plane-api"]
+	path = protos/envoyproxy/data-plane-api
+	url = https://github.com/envoyproxy/data-plane-api
+[submodule "protos/envoyproxy/protoc-gen-validate"]
+	path = protos/envoyproxy/protoc-gen-validate
+	url = https://github.com/envoyproxy/protoc-gen-validate
+[submodule "protos/cncf/udpa"]
+	path = protos/cncf/udpa
+	url = https://github.com/cncf/udpa.git
+[submodule "protos/googleapies"]
+	path = protos/googleapies
+	url = https://github.com/googleapis/googleapis.git

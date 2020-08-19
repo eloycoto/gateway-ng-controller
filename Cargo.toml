@@ -1,0 +1,22 @@
+[package]
+name = "gateway-ng-controller"
+version = "0.1.0"
+authors = ["Eloy Coto <eloy.coto@acalustra.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+tonic = "0.3"
+prost = { version = "0.6", default-features = false, features = ["prost-derive"] }
+# Only necessary if using Protobuf well-known types:
+prost-types = { version = "0.6", default-features = false }
+tokio = { version = "0.2", features = ["macros"] }
+futures = { version = "0.3", default-features = false, features = ["alloc"] }
+
+async-stream = "0.2"
+log = "0.4.11"
+
+[build-dependencies]
+tonic-build = "0.3"
