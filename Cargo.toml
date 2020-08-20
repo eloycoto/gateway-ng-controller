@@ -8,15 +8,16 @@ edition = "2018"
 
 [dependencies]
 
-tonic = "0.3"
+async-stream = "0.2"
+futures = { version = "0.3", default-features = false, features = ["alloc"] }
+log = "0.4.11"
 prost = { version = "0.6", default-features = false, features = ["prost-derive"] }
-# Only necessary if using Protobuf well-known types:
 prost-types = { version = "0.6", default-features = false }
 tokio = { version = "0.2", features = ["macros"] }
-futures = { version = "0.3", default-features = false, features = ["alloc"] }
-
-async-stream = "0.2"
-log = "0.4.11"
+tokio-timer = "0.2.13"
+tonic = "0.3"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
 tonic-build = "0.3"
