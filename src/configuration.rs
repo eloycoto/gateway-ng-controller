@@ -1,3 +1,4 @@
+use crate::envoy_helpers::EnvoyExport;
 use crate::service;
 use log;
 use std::fs::File;
@@ -40,5 +41,14 @@ impl Config {
         file.read_to_string(&mut contents)
             .expect("Error reading the file");
         return contents;
+    }
+
+    pub fn export_config_to_envoy(&self) -> Vec<EnvoyExport> {
+        let mut result: Vec<EnvoyExport> = Vec::new();
+        // let mut result = Vec::new();
+        for service in &self.services {
+            result.append(&mut service.export());
+        }
+        return result;
     }
 }

@@ -8,6 +8,8 @@ use crate::envoy::envoy::config::endpoint::v3::Endpoint;
 use crate::envoy::envoy::config::endpoint::v3::LbEndpoint;
 use crate::envoy::envoy::config::endpoint::v3::LocalityLbEndpoints;
 
+use crate::envoy_helpers::{EnvoyExport, EnvoyResource};
+
 // @TODO target domain connect_timeout
 // @TODO optional fields
 #[derive(Serialize, Deserialize, Debug)]
@@ -19,11 +21,21 @@ pub struct Service {
 }
 
 impl Service {
-    // pub fn export_to_envoy(&self) {
-    //     println!("Export to envoy {:?}", self);
-    // }
+    pub fn export(&self) -> Vec<EnvoyExport> {
+        let mut result: Vec<EnvoyExport> = Vec::new();
+        let cluster = self.export_clusters();
+        result.push(EnvoyExport {
+            key: format!("service::id::{}::cluster", self.id).to_string(),
+            config: EnvoyResource::Cluster(cluster),
+        });
+        return result;
+    }
 
-    pub fn export_clusters(&self) -> Cluster {
+    fn export_listener(&self) -> bool {
+        return true;
+    }
+
+    fn export_clusters(&self) -> Cluster {
         return Cluster {
             name: self.target_domain.to_string(),
             connect_timeout: Some(Duration {
@@ -47,8 +59,4 @@ impl Service {
             ..Default::default()
         };
     }
-
-    // pub fn export_listener(&self) {
-    //     print!("To be implemented");
-    // }
 }

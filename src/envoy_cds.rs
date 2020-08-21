@@ -4,6 +4,8 @@ use prost_types::Duration;
 use std::pin::Pin;
 use tonic::{Request, Response, Status, Streaming};
 
+use crate::cache::LocalCache;
+
 use crate::envoy::envoy::config::cluster::v3::Cluster;
 use crate::envoy::envoy::service::cluster::v3::cluster_discovery_service_server::ClusterDiscoveryService;
 use crate::envoy::envoy::service::discovery::v3::{
@@ -11,8 +13,16 @@ use crate::envoy::envoy::service::discovery::v3::{
 };
 
 // @TODO add a cache element here?
-#[derive(Debug, Default)]
-pub struct CDS {}
+#[derive(Debug)]
+pub struct CDS {
+    cache: LocalCache,
+}
+
+impl CDS {
+    pub fn new(cache: LocalCache) -> CDS {
+        return CDS { cache: cache };
+    }
+}
 
 #[tonic::async_trait]
 impl ClusterDiscoveryService for CDS {

@@ -1,45 +1,37 @@
-use std::collections::HashMap;
+use crate::envoy_helpers::EnvoyExport;
 
-#[derive(Debug)]
-struct Snapshot {
-    data: HashMap<i32, i32>,
+#[derive(Debug, Clone, Copy)]
+pub struct LocalCache {
+    cache: Vec<EnvoyExport>,
     version: u32,
+    temp_cache: Vec<EnvoyExport>,
 }
 
-impl Snapshot {
-    pub fn new() -> Self {
-        return Snapshot {
-            data: HashMap::new(),
-            version: 0,
-        };
-    }
-}
-
-#[derive(Debug)]
-pub struct LocalCache<T> {
-    cache: HashMap<std::string::String, T>,
-    snapshot: Snapshot,
-}
-
-impl<T> LocalCache<T> {
-    pub fn new() -> LocalCache<T> {
-        // @TODO review why cannot be initlize inside LocalCache{}
-        let local_cache: HashMap<std::string::String, T> = HashMap::new();
+impl LocalCache {
+    pub fn new() -> LocalCache {
         return LocalCache {
-            cache: local_cache,
-            snapshot: Snapshot::new(),
+            cache: Vec::new(),
+            version: 0,
+            temp_cache: Vec::new(),
         };
     }
 
-    pub fn add(&self) -> bool {
-        return true;
+    pub fn add(&mut self, element: EnvoyExport) {
+        self.temp_cache.push(element)
     }
 
-    pub fn release(&self) -> bool {
-        return true;
+    pub fn add_multiple(&mut self, elements: &mut Vec<EnvoyExport>) {
+        self.temp_cache.append(elements);
     }
 
-    pub fn get_snapshot(&self) -> bool {
-        return true;
+    pub fn read_all(&mut self) -> &Vec<EnvoyExport> {
+        return &self.cache;
+    }
+
+    pub fn release(&mut self) -> u32 {
+        self.cache = self.temp_cache.clone();
+        self.version += 1;
+        self.temp_cache = Vec::new();
+        return self.version;
     }
 }

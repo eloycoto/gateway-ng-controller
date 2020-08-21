@@ -3,6 +3,7 @@ mod cache;
 mod configuration;
 mod envoy;
 mod envoy_cds;
+mod envoy_helpers;
 mod service;
 
 use crate::envoy::envoy::service::cluster::v3::cluster_discovery_service_server::ClusterDiscoveryServiceServer;
@@ -15,14 +16,14 @@ fn intercept(req: Request<()>) -> Result<Request<()>, Status> {
     Ok(req)
 }
 
-fn initialize_config_loader(mut cache: cache::LocalCache<std::string::String>) -> bool {
+fn initialize_config_loader(cache: cache::LocalCache) -> bool {
     tokio::task::spawn_blocking(move || loop {
-        let mut config = configuration::Config::parse_config("./log.json");
-        println!("Config-->{:?}", config);
-        // @TODO maybe something golang ticker here? should be a better way to do this.
-        // cache.add();
+        let config = configuration::Config::parse_config("./log.json");
+        //@TODO Check md5 here
+        cache.add_multiple(&mut config.export_config_to_envoy());
+        // @TODO mybe something golang ticker here? should be a better way to do this.
         println!("Running {:?}", std::time::Instant::now());
-        std::thread::sleep(std::time::Duration::from_secs(30));
+        std::thread::sleep(std::time::Duration::from_secs(5));
         // println!("Finished, cache={:?}", cache);
     });
     return true;
@@ -37,10 +38,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // configuration::Config::parse_config("./log.json");
     //@TODO add a cache here, where the info can be set, and CDS read from that.
     //
-    let config_cache = cache::LocalCache::<std::string::String>::new();
+    let config_cache = cache::LocalCache::new();
+
+    let cds = envoy_cds::CDS::new(config_cache);
+
     initialize_config_loader(config_cache);
 
-    let cds = envoy_cds::CDS::default();
     info!("CDS service listening on {}", addr);
     info!("CDS service listening on {:?}", cds);
 
