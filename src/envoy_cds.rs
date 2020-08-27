@@ -4,7 +4,7 @@ use prost_types::Duration;
 use std::pin::Pin;
 use tonic::{Request, Response, Status, Streaming};
 
-use crate::cache::LocalCache;
+use crate::cache;
 
 use crate::envoy::envoy::config::cluster::v3::Cluster;
 use crate::envoy::envoy::service::cluster::v3::cluster_discovery_service_server::ClusterDiscoveryService;
@@ -12,15 +12,29 @@ use crate::envoy::envoy::service::discovery::v3::{
     DeltaDiscoveryRequest, DeltaDiscoveryResponse, DiscoveryRequest, DiscoveryResponse,
 };
 
-// @TODO add a cache element here?
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CDS {
-    cache: LocalCache,
+    clusters: Vec<std::string::String>,
 }
 
 impl CDS {
-    pub fn new(cache: LocalCache) -> CDS {
-        return CDS { cache: cache };
+    pub fn new() -> CDS {
+        return CDS {
+            clusters: Vec::new(),
+        };
+    }
+
+    fn refresh_data(&self) {
+        let data = cache::read_all();
+        println!("Data on refresh is::{:?}", data);
+        // @TODO implement here the list of clusters
+        return;
+    }
+
+    pub fn subscribe(&'_ mut self) {
+        let object = Box::new(self.clone());
+        let callback = move || object.refresh_data();
+        cache::subcribe_release(callback);
     }
 }
 
